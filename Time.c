@@ -30,7 +30,7 @@
 #if ARDUINO >= 100
 #include <Arduino.h> 
 #else
-#include <WProgram.h> 
+//#include <WProgram.h>
 #endif
 
 #include "TimeLib.h"
@@ -41,12 +41,12 @@ static uint32_t syncInterval = 300;  // time sync will be attempted after this m
 
 void refreshCache(time_t t) {
   if (t != cacheTime) {
-    breakTime(t, tm); 
+    breakTime(t, &tm);
     cacheTime = t; 
   }
 }
 
-int hour() { // the hour now 
+int hourNow() { // the hour now
   return hour(now()); 
 }
 
@@ -55,7 +55,7 @@ int hour(time_t t) { // the hour for the given time
   return tm.Hour;  
 }
 
-int hourFormat12() { // the hour now in 12 hour format
+int hourNowFormat12() { // the hour now in 12 hour format
   return hourFormat12(now()); 
 }
 
@@ -69,7 +69,7 @@ int hourFormat12(time_t t) { // the hour for the given time in 12 hour format
     return tm.Hour ;
 }
 
-uint8_t isAM() { // returns true if time now is AM
+uint8_t isAMNow() { // returns true if time now is AM
   return !isPM(now()); 
 }
 
@@ -77,7 +77,7 @@ uint8_t isAM(time_t t) { // returns true if given time is AM
   return !isPM(t);  
 }
 
-uint8_t isPM() { // returns true if PM
+uint8_t isPMNow() { // returns true if PM
   return isPM(now()); 
 }
 
@@ -85,7 +85,7 @@ uint8_t isPM(time_t t) { // returns true if PM
   return (hour(t) >= 12); 
 }
 
-int minute() {
+int minuteNow() {
   return minute(now()); 
 }
 
@@ -94,7 +94,7 @@ int minute(time_t t) { // the minute for the given time
   return tm.Minute;  
 }
 
-int second() {
+int secondNow() {
   return second(now()); 
 }
 
@@ -103,7 +103,7 @@ int second(time_t t) {  // the second for the given time
   return tm.Second;
 }
 
-int day(){
+int dayNow(){
   return(day(now())); 
 }
 
@@ -112,7 +112,7 @@ int day(time_t t) { // the day for the given time (0-6)
   return tm.Day;
 }
 
-int weekday() {   // Sunday is day 1
+int weekdayNow() {   // Sunday is day 1
   return  weekday(now()); 
 }
 
@@ -121,7 +121,7 @@ int weekday(time_t t) {
   return tm.Wday;
 }
    
-int month(){
+int monthNow(){
   return month(now()); 
 }
 
@@ -130,7 +130,7 @@ int month(time_t t) {  // the month for the given time
   return tm.Month;
 }
 
-int year() {  // as in Processing, the full four digit year: (2009, 2010 etc) 
+int yearNow() {  // as in Processing, the full four digit year: (2009, 2010 etc)
   return year(now()); 
 }
 
@@ -148,7 +148,7 @@ int year(time_t t) { // the year for the given time
 
 static  const uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31}; // API starts months from 1, this array starts from 0
  
-void breakTime(time_t timeInput, tmElements_t &tm){
+void breakTime(time_t timeInput, tmElements_t *tm){
 // break the given time_t into time components
 // this is a more compact version of the C library localtime function
 // note that year is offset from 1970 !!!
@@ -159,20 +159,20 @@ void breakTime(time_t timeInput, tmElements_t &tm){
   unsigned long days;
 
   time = (uint32_t)timeInput;
-  tm.Second = time % 60;
+  tm->Second = time % 60;
   time /= 60; // now it is minutes
-  tm.Minute = time % 60;
+  tm->Minute = time % 60;
   time /= 60; // now it is hours
-  tm.Hour = time % 24;
+  tm->Hour = time % 24;
   time /= 24; // now it is days
-  tm.Wday = ((time + 4) % 7) + 1;  // Sunday is day 1 
+  tm->Wday = ((time + 4) % 7) + 1;  // Sunday is day 1
   
   year = 0;  
   days = 0;
   while((unsigned)(days += (LEAP_YEAR(year) ? 366 : 365)) <= time) {
     year++;
   }
-  tm.Year = year; // year is offset from 1970 
+  tm->Year = year; // year is offset from 1970
   
   days -= LEAP_YEAR(year) ? 366 : 365;
   time  -= days; // now it is days in this year, starting at 0
@@ -197,11 +197,11 @@ void breakTime(time_t timeInput, tmElements_t &tm){
         break;
     }
   }
-  tm.Month = month + 1;  // jan is month 1  
-  tm.Day = time + 1;     // day of month
+  tm->Month = month + 1;  // jan is month 1
+  tm->Day = time + 1;     // day of month
 }
 
-time_t makeTime(const tmElements_t &tm){   
+time_t makeTime(const tmElements_t *tm){
 // assemble time elements into time_t 
 // note year argument is offset from 1970 (see macros in time.h to convert to other formats)
 // previous version used full four digit year (or digits since 2000),i.e. 2009 was 2009 or 9
@@ -210,25 +210,25 @@ time_t makeTime(const tmElements_t &tm){
   uint32_t seconds;
 
   // seconds from 1970 till 1 jan 00:00:00 of the given year
-  seconds= tm.Year*(SECS_PER_DAY * 365);
-  for (i = 0; i < tm.Year; i++) {
+  seconds= tm->Year*(SECS_PER_DAY * 365);
+  for (i = 0; i < tm->Year; i++) {
     if (LEAP_YEAR(i)) {
       seconds += SECS_PER_DAY;   // add extra days for leap years
     }
   }
   
   // add days for this year, months start from 1
-  for (i = 1; i < tm.Month; i++) {
-    if ( (i == 2) && LEAP_YEAR(tm.Year)) { 
+  for (i = 1; i < tm->Month; i++) {
+    if ( (i == 2) && LEAP_YEAR(tm->Year)) {
       seconds += SECS_PER_DAY * 29;
     } else {
       seconds += SECS_PER_DAY * monthDays[i-1];  //monthDay array starts from 0
     }
   }
-  seconds+= (tm.Day-1) * SECS_PER_DAY;
-  seconds+= tm.Hour * SECS_PER_HOUR;
-  seconds+= tm.Minute * SECS_PER_MIN;
-  seconds+= tm.Second;
+  seconds+= (tm->Day-1) * SECS_PER_DAY;
+  seconds+= tm->Hour * SECS_PER_HOUR;
+  seconds+= tm->Minute * SECS_PER_MIN;
+  seconds+= tm->Second;
   return (time_t)seconds; 
 }
 /*=====================================================*/	
@@ -283,7 +283,7 @@ void setTime(time_t t) {
   prevMillis = millis();  // restart counting from now (thanks to Korman for this fix)
 } 
 
-void setTime(int hr,int min,int sec,int dy, int mnth, int yr){
+void setTimeSeg(int hr,int min,int sec,int dy, int mnth, int yr){
  // year can be given as full four digit year or two digts (2010 or 10 for 2010);  
  //it is converted to years since 1970
   if( yr > 99)
@@ -296,7 +296,7 @@ void setTime(int hr,int min,int sec,int dy, int mnth, int yr){
   tm.Hour = hr;
   tm.Minute = min;
   tm.Second = sec;
-  setTime(makeTime(tm));
+  setTime(makeTime(&tm));
 }
 
 void adjustTime(long adjustment) {

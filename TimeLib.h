@@ -8,7 +8,7 @@
 */     
 
 #ifndef _Time_h
-#ifdef __cplusplus
+//#ifdef __cplusplus
 #define _Time_h
 
 #include <inttypes.h>
@@ -16,6 +16,7 @@
 #include <sys/types.h> // for __time_t_defined, but avr libc lacks sys/types.h
 #endif
 
+#include <stdint.h>
 
 #if !defined(__time_t_defined) // avoid conflict with newlib or other posix libc
 typedef unsigned long time_t;
@@ -30,7 +31,7 @@ typedef unsigned long time_t;
 // and unpredictable effects by conflicting with the C library header "time.h",
 // but at least this hack lets us define C++ functions as intended.  Hopefully
 // nothing too terrible will result from overriding the C library header?!
-extern "C++" {
+//extern "C++" {
 typedef enum {timeNotSet, timeNeedsSync, timeSet
 }  timeStatus_t ;
 
@@ -42,7 +43,7 @@ typedef enum {
     tmSecond, tmMinute, tmHour, tmWday, tmDay,tmMonth, tmYear, tmNbrFields
 } tmByteFields;	   
 
-typedef struct  { 
+typedef struct {
   uint8_t Second; 
   uint8_t Minute; 
   uint8_t Hour; 
@@ -50,7 +51,7 @@ typedef struct  {
   uint8_t Day;
   uint8_t Month; 
   uint8_t Year;   // offset from 1970; 
-} 	tmElements_t, TimeElements, *tmElementsPtr_t;
+} tmElements_t;
 
 //convenience macros to convert to and from tm years 
 #define  tmYearToCalendar(Y) ((Y) + 1970)  // full four digit year 
@@ -96,30 +97,30 @@ typedef time_t(*getExternalTime)();
 
 /*============================================================================*/
 /*  time and date functions   */
-int     hour();            // the hour now 
+int     hourNow();            // the hour now
 int     hour(time_t t);    // the hour for the given time
-int     hourFormat12();    // the hour now in 12 hour format
+int     hourNowFormat12();    // the hour now in 12 hour format
 int     hourFormat12(time_t t); // the hour for the given time in 12 hour format
-uint8_t isAM();            // returns true if time now is AM
+uint8_t isAMNow();            // returns true if time now is AM
 uint8_t isAM(time_t t);    // returns true the given time is AM
-uint8_t isPM();            // returns true if time now is PM
+uint8_t isPMNow();            // returns true if time now is PM
 uint8_t isPM(time_t t);    // returns true the given time is PM
-int     minute();          // the minute now 
+int     minuteNow();          // the minute now
 int     minute(time_t t);  // the minute for the given time
-int     second();          // the second now 
+int     secondNow();          // the second now
 int     second(time_t t);  // the second for the given time
-int     day();             // the day now 
+int     dayNow();             // the day now
 int     day(time_t t);     // the day for the given time
-int     weekday();         // the weekday now (Sunday is day 1) 
+int     weekdayNow();         // the weekday now (Sunday is day 1)
 int     weekday(time_t t); // the weekday for the given time 
-int     month();           // the month now  (Jan is month 1)
+int     monthNow();           // the month now  (Jan is month 1)
 int     month(time_t t);   // the month for the given time
-int     year();            // the full four digit year: (2009, 2010 etc) 
+int     yearNow();            // the full four digit year: (2009, 2010 etc)
 int     year(time_t t);    // the year for the given time
 
 time_t now();              // return the current time as seconds since Jan 1 1970 
 void    setTime(time_t t);
-void    setTime(int hr,int min,int sec,int day, int month, int yr);
+void    setTimeSeg(int hr,int min,int sec,int day, int month, int yr);
 void    adjustTime(long adjustment);
 
 /* date strings */ 
@@ -135,10 +136,10 @@ void    setSyncProvider( getExternalTime getTimeFunction); // identify the exter
 void    setSyncInterval(time_t interval); // set the number of seconds between re-sync
 
 /* low level functions to convert to and from system time                     */
-void breakTime(time_t time, tmElements_t &tm);  // break time_t into elements
-time_t makeTime(const tmElements_t &tm);  // convert time elements into time_t
+void breakTime(time_t time, tmElements_t *tm);  // break time_t into elements
+time_t makeTime(const tmElements_t *tm);  // convert time elements into time_t
 
-} // extern "C++"
-#endif // __cplusplus
+//} // extern "C++"
+//#endif // __cplusplus
 #endif /* _Time_h */
 

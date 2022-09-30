@@ -9,7 +9,7 @@
  * 
  */
 
-#include <Arduino.h>
+//#include <Arduino.h>
 
 // Arduino.h should properly define PROGMEM, PGM_P, strcpy_P, pgm_read_byte, pgm_read_ptr
 // But not all platforms define these as they should.  If you find a platform needing these
@@ -17,11 +17,20 @@
 #if defined(ESP8266)
 #undef PROGMEM
 #define PROGMEM
+#else
+#undef PROGMEM
+#define PROGMEM
 #endif
 
 #include "TimeLib.h"
 
- 
+//#include <stdint.h>
+#include <string.h>
+
+#ifndef dt_MAX_STRING_LEN
+	#define dt_MAX_STRING_LEN	12
+#endif
+
 // the short strings for each day or month must be exactly dt_SHORT_STR_LEN
 #define dt_SHORT_STR_LEN  3 // the length of short strings
 
@@ -69,21 +78,21 @@ const char dayShortNames_P[] PROGMEM = "ErrSunMonTueWedThuFriSat";
 
 char* monthStr(uint8_t month)
 {
-    strcpy_P(buffer, (PGM_P)pgm_read_ptr(&(monthNames_P[month])));
+    strncpy(buffer, (const char *)&(monthNames_P[month]), dt_MAX_STRING_LEN);
     return buffer;
 }
 
 char* monthShortStr(uint8_t month)
 {
    for (int i=0; i < dt_SHORT_STR_LEN; i++)      
-      buffer[i] = pgm_read_byte(&(monthShortNames_P[i+ (month*dt_SHORT_STR_LEN)]));  
+      buffer[i] = monthShortNames_P[i+ (month*dt_SHORT_STR_LEN)];
    buffer[dt_SHORT_STR_LEN] = 0;
    return buffer;
 }
 
 char* dayStr(uint8_t day) 
 {
-   strcpy_P(buffer, (PGM_P)pgm_read_ptr(&(dayNames_P[day])));
+   strncpy(buffer, (const char *)&(dayNames_P[day]), dt_MAX_STRING_LEN);
    return buffer;
 }
 
@@ -91,7 +100,7 @@ char* dayShortStr(uint8_t day)
 {
    uint8_t index = day*dt_SHORT_STR_LEN;
    for (int i=0; i < dt_SHORT_STR_LEN; i++)      
-      buffer[i] = pgm_read_byte(&(dayShortNames_P[index + i]));  
+      buffer[i] = dayShortNames_P[index + i];
    buffer[dt_SHORT_STR_LEN] = 0; 
    return buffer;
 }
